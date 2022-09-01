@@ -1,6 +1,0 @@
-spring:
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://dev-shared-cluster-aurora-mysql-primary-cluster.cluster-ckd2evw9znz4.us-east-2.rds.amazonaws.com:3306/vtxentpd?useSSL=false
-    username: vtxentpd
-    password: 2ngPtvB2VQY64Vg2yBBt
