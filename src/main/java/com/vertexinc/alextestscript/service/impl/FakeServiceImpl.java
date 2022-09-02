@@ -1,5 +1,7 @@
 package com.vertexinc.alextestscript.service.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vertexinc.alextestscript.model.Customer;
 import com.vertexinc.alextestscript.model.CustomerEmailDomain;
 import com.vertexinc.alextestscript.model.CustomerType;
@@ -18,14 +20,18 @@ import com.vertexinc.alextestscript.repo.RoleRepository;
 import com.vertexinc.alextestscript.repo.UserRepository;
 import com.vertexinc.alextestscript.service.FakeService;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
+import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import javax.persistence.EntityNotFoundException;
 
 /**
  * DESCRIPTION
@@ -36,6 +42,14 @@ import java.util.UUID;
 @Service
 @AllArgsConstructor
 public class FakeServiceImpl implements FakeService {
+
+  public static final ObjectMapper MAPPER = new ObjectMapper();
+  private static final String USERS_FILE = "target/USERS_FILE.json";
+  private static final String CUSTOMERS_FILE = "target/CUSTOMERS_FILE.json";
+  private static final String CUSTOMERS_EMAIL_DOMAIN_FILE = "target/CUSTOMERS_EMAIL_DOMAIN_FILE.json";
+  private static final String CUSTOMERS_VOD_FILE = "target/CUSTOMERS_VOD_FILE.json";
+  private static final String CUSTOMERS_USER_FILE = "target/CUSTOMERS_USER_FILE.json";
+  private static final String CUSTOMERS_USER_ROLE_FILE = "target/CUSTOMERS_USER_ROLE_FILE.json";
 
   private final UserRepository userRepository;
 
@@ -65,25 +79,39 @@ public class FakeServiceImpl implements FakeService {
     List<CustomerUser> customerUsers = new ArrayList<>();
     List<CustomerUserRole> customerUserRoles = new ArrayList<>();
 
-    for (int i = 0; i < countFakeRows; i++) {
-      User user = createUser(i);
-      users.add(user);
+    try {
+      for (int i = 0; i < countFakeRows; i++) {
+        User user = createUser(i);
+        users.add(user);
 
-      Customer customer = createCustomer(i, customerType, user);
-      customers.add(customer);
+        Customer customer = createCustomer(i, customerType, user);
+        customers.add(customer);
 
-      CustomerEmailDomain customerEmailDomain = createCustomerEmailDomain(i, customer);
-      customerEmailDomains.add(customerEmailDomain);
+        CustomerEmailDomain customerEmailDomain = createCustomerEmailDomain(i, customer);
+        customerEmailDomains.add(customerEmailDomain);
 
-      CustomerVodSubDomain customerVodSubDomain = createCustomerVodSubDomain(i, customer);
-      customerVodSubDomains.add(customerVodSubDomain);
+        CustomerVodSubDomain customerVodSubDomain = createCustomerVodSubDomain(i, customer);
+        customerVodSubDomains.add(customerVodSubDomain);
 
-      CustomerUser customerUser = createCustomerUser(customer, user);
-      customerUsers.add(customerUser);
+        CustomerUser customerUser = createCustomerUser(customer, user);
+        customerUsers.add(customerUser);
 
-      CustomerUserRole customerUserRole = createCustomerUserRole(customer, user, role);
-      customerUserRoles.add(customerUserRole);
+        CustomerUserRole customerUserRole = createCustomerUserRole(customer, user, role);
+        customerUserRoles.add(customerUserRole);
+      }
+    } finally {
+      saveInFile(USERS_FILE, users);
+      saveInFile(CUSTOMERS_FILE, customers);
+      saveInFile(CUSTOMERS_EMAIL_DOMAIN_FILE, customerEmailDomains);
+      saveInFile(CUSTOMERS_VOD_FILE, customerVodSubDomains);
+      saveInFile(CUSTOMERS_USER_FILE, customerUsers);
+      saveInFile(CUSTOMERS_USER_ROLE_FILE, customerUserRoles);
     }
+  }
+
+  @SneakyThrows
+  private void saveInFile(String filePath, List<?> list) {
+    MAPPER.writeValue(new File(filePath), list);
   }
 
   private CustomerType createCustomerType(int countFakeRows) {
@@ -174,5 +202,39 @@ public class FakeServiceImpl implements FakeService {
         .modifiedUtc(Timestamp.from(Instant.now()))
         .versionId(UUID.randomUUID())
         .build());
+  }
+
+  @SneakyThrows
+  @Override
+  public void deleteFakeData() {
+    File customerUserRolesFile = new File(CUSTOMERS_USER_ROLE_FILE);
+    List<CustomerUserRole> customerUserRoles = MAPPER.readValue(customerUserRolesFile, new TypeReference<>() {});
+    customerUserRoleRepository.deleteAll(customerUserRoles);
+    customerUserRolesFile.delete();
+
+    File customerUsersFile = new File(CUSTOMERS_USER_FILE);
+    List<CustomerUser> customerUsers = MAPPER.readValue(customerUsersFile, new TypeReference<>() {});
+    customerUserRepository.deleteAll(customerUsers);
+    customerUsersFile.delete();
+
+    File customerVodSubDomainsFile = new File(CUSTOMERS_VOD_FILE);
+    List<CustomerVodSubDomain> customerVodSubDomains = MAPPER.readValue(customerVodSubDomainsFile, new TypeReference<>() {});
+    customerVobSubDomainRepository.deleteAll(customerVodSubDomains);
+    customerVodSubDomainsFile.delete();
+
+    File customerEmailDomainsFile = new File(CUSTOMERS_EMAIL_DOMAIN_FILE);
+    List<CustomerEmailDomain> customerEmailDomains = MAPPER.readValue(customerEmailDomainsFile, new TypeReference<>() {});
+    customerEmailDomainRepository.deleteAll(customerEmailDomains);
+    customerEmailDomainsFile.delete();
+
+    File customersFile = new File(CUSTOMERS_FILE);
+    List<Customer> customers = MAPPER.readValue(customersFile, new TypeReference<>() {});
+    customerRepository.deleteAll(customers);
+    customersFile.delete();
+
+    File usersFile = new File(USERS_FILE);
+    List<User> users = MAPPER.readValue(usersFile, new TypeReference<>() {});
+    userRepository.deleteAll(users);
+    usersFile.delete();
   }
 }

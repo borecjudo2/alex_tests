@@ -1,5 +1,7 @@
 package com.vertexinc.alextestscript.service;
 
+import java.io.IOException;
+
 /**
  * DESCRIPTION
  *
@@ -8,5 +10,7 @@ package com.vertexinc.alextestscript.service;
  */
 public interface FakeService {
 
-  void createFakeData(int countFakeRows);
+  void createFakeData(int countFakeRows) throws IOException;
+
+  void deleteFakeData();
 }

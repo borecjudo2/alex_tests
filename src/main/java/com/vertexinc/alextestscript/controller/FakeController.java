@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+
 /**
  * DESCRIPTION
  *
@@ -24,7 +26,13 @@ public class FakeController {
 
   @GetMapping("create")
   @ResponseStatus(HttpStatus.OK)
-  public void createFakeData(@RequestParam(value = "countFakeRows") int countFakeRows) {
+  public void createFakeData(@RequestParam(value = "countFakeRows") int countFakeRows) throws IOException {
     fakeService.createFakeData(countFakeRows);
+  }
+
+  @GetMapping("delete")
+  @ResponseStatus(HttpStatus.OK)
+  public void deleteFakeData() {
+    fakeService.deleteFakeData();
   }
 }
